@@ -11,6 +11,8 @@ import os
 import requests
 from dotenv import load_dotenv
 
+from interview_context import build_interview_context
+
 load_dotenv()
 
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
@@ -58,22 +60,8 @@ Reply with ONLY a JSON object (no markdown fences, no extra text) in exactly thi
 
 
 def _build_prompt(config, question, answer):
-    lines = [
-        f"Job Role: {config.get('job_role') or 'Not specified'}",
-        f"Experience Level: {config.get('experience_level') or 'Not specified'}",
-        f"Interview Type: {config.get('interview_type') or 'Not specified'}",
-        f"Difficulty: {config.get('difficulty') or 'Not specified'}",
-        f"Language: {config.get('language') or 'English'}",
-        f"Interviewer Style: {config.get('interviewer_style') or 'Not specified'}",
-    ]
-    if config.get("job_description"):
-        lines.append(f"Job Description: {config['job_description']}")
-    if config.get("custom_instructions"):
-        lines.append(f"Custom Instructions: {config['custom_instructions']}")
-
-    lines.append(f"\nInterview Question: {question}")
-    lines.append(f"\nCandidate's Answer: {answer}")
-    return "\n".join(lines)
+    context = build_interview_context(config)
+    return f"{context}\n\nInterview Question: {question}\n\nCandidate's Answer: {answer}"
 
 
 def evaluate_answer(config, question, answer):
