@@ -146,8 +146,8 @@ Best regards,
 
 # Basic page setup
 st.set_page_config(
-    page_title="AI Call Center Training Assistant",
-    page_icon="📞",
+    page_title="Professional AI Interview Trainer",
+    page_icon="🎯",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -429,9 +429,9 @@ if "menu_choice" not in st.session_state:
 with st.sidebar:
     st.markdown("""
     <div class="sidebar-brand">
-        <div class="brand-icon">📞</div>
-        <div class="brand-name">AI Call Center</div>
-        <div class="brand-tag">Training Assistant</div>
+        <div class="brand-icon">🎯</div>
+        <div class="brand-name">Professional AI</div>
+        <div class="brand-tag">Interview Trainer</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -464,7 +464,7 @@ def render_page_header(icon, title, subtitle):
 if menu == "Home":
     st.markdown("""
     <div class="hero-card">
-        <div class="hero-title">📞 AI Call Center Training Assistant</div>
+        <div class="hero-title">🎯 Professional AI Interview Trainer</div>
         <div class="hero-subtitle">A modern, all-in-one training dashboard to practice interviews, evaluate your
         answers, master real customer scenarios, and craft professional emails.</div>
     </div>

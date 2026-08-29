@@ -1,6 +1,6 @@
-# 📞 AI Call Center Training Assistant
+# 🎯 Professional AI Interview Trainer
 
-A Streamlit-based training dashboard that helps call center agents and job applicants practice the core skills of the role — answering interview questions, responding to customer situations, and writing professional emails — all in one place.
+A Streamlit-based training dashboard that helps job applicants and professionals practice the core skills of interviewing — answering interview questions, responding to real-world workplace situations, and writing professional emails — all in one place.
 
 ## What It Does
 
@@ -33,8 +33,8 @@ The app is organized into a sidebar-navigated dashboard with a home overview and
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/malik-wasiq/AI-CallCenter-Training-Assistant.git
-cd AI-CallCenter-Training-Assistant
+git clone https://github.com/malik-wasiq/Professional-AI-Interview-Trainer.git
+cd Professional-AI-Interview-Trainer
 ```
 
 ### 2. Create and activate a virtual environment
@@ -70,7 +70,7 @@ The app will open at `http://localhost:8501`.
 ## Project Structure
 
 ```text
-AI-CallCenter-Training-Assistant/
+Professional-AI-Interview-Trainer/
 ├── app.py             # Main Streamlit app — all pages, data, and UI logic
 ├── requirements.txt   # Python dependencies
 ├── .gitignore
