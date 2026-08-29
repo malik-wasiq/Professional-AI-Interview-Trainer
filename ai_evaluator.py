@@ -1,16 +1,21 @@
-"""Calls the Claude API to evaluate an interview answer.
+"""Calls an LLM via OpenRouter to evaluate an interview answer.
 
 Kept separate from app.py so the Flask routes stay simple. evaluate_answer()
-never raises -- if the API key is missing, the API call fails, or the
+never raises -- if the API key is missing, the request fails, or the
 response can't be parsed, it returns a fallback evaluation instead so the
 app keeps working.
 """
 import json
 import os
 
-import anthropic
+import requests
+from dotenv import load_dotenv
 
-MODEL = "claude-opus-5"
+load_dotenv()
+
+OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
+MODEL = os.environ.get("OPENROUTER_MODEL", "anthropic/claude-opus-5")
+REQUEST_TIMEOUT = 30  # seconds
 
 # Shown to the user whenever we can't get a real AI evaluation.
 FALLBACK_EVALUATION = {
@@ -77,28 +82,42 @@ def evaluate_answer(config, question, answer):
     Shape: {"scores": {...}, "overall_score": int, "suggestions": [...],
     "is_fallback": bool, "fallback_reason": str | None}
     """
-    if not os.environ.get("ANTHROPIC_API_KEY"):
+    api_key = os.environ.get("OPENROUTER_API_KEY")
+    if not api_key:
         return _fallback("AI evaluation is not configured (missing API key). Showing a placeholder evaluation instead.")
 
-    try:
-        client = anthropic.Anthropic()
-        response = client.messages.create(
-            model=MODEL,
-            max_tokens=1024,
-            system=SYSTEM_PROMPT,
-            output_config={"effort": "low"},
-            messages=[{"role": "user", "content": _build_prompt(config, question, answer)}],
-        )
-    except anthropic.RateLimitError:
-        return _fallback("The AI service is busy right now. Showing a placeholder evaluation instead.")
-    except anthropic.APIStatusError:
-        return _fallback("The AI service returned an error. Showing a placeholder evaluation instead.")
-    except anthropic.APIConnectionError:
-        return _fallback("Could not reach the AI service. Showing a placeholder evaluation instead.")
-    except Exception:
-        return _fallback("Something went wrong generating your evaluation. Showing a placeholder evaluation instead.")
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "model": MODEL,
+        "messages": [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": _build_prompt(config, question, answer)},
+        ],
+        "max_tokens": 1024,
+    }
 
-    text = "".join(block.text for block in response.content if block.type == "text").strip()
+    try:
+        response = requests.post(OPENROUTER_URL, headers=headers, json=payload, timeout=REQUEST_TIMEOUT)
+    except requests.exceptions.Timeout:
+        return _fallback("The AI service took too long to respond. Showing a placeholder evaluation instead.")
+    except requests.exceptions.ConnectionError:
+        return _fallback("Could not reach the AI service. Showing a placeholder evaluation instead.")
+    except requests.exceptions.RequestException:
+        return _fallback("Something went wrong contacting the AI service. Showing a placeholder evaluation instead.")
+
+    if response.status_code == 429:
+        return _fallback("The AI service is busy right now. Showing a placeholder evaluation instead.")
+    if not response.ok:
+        return _fallback("The AI service returned an error. Showing a placeholder evaluation instead.")
+
+    try:
+        data = response.json()
+        text = data["choices"][0]["message"]["content"].strip()
+    except (ValueError, KeyError, IndexError, TypeError):
+        return _fallback("Received an unexpected response from the AI. Showing a placeholder evaluation instead.")
 
     # The model sometimes wraps JSON in a code fence despite instructions -- strip it.
     if text.startswith("```"):
