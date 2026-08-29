@@ -10,70 +10,137 @@ app = Flask(__name__)
 # ever deploying this publicly.
 app.secret_key = "dev-secret-key"
 
-# Predefined interview questions, organized by interview type.
-# Each type has questions for each difficulty level. "Role-Specific" and
-# "Mixed" are handled separately -- see ROLE_SPECIFIC_TEMPLATES and the
-# Mixed-pool logic in setup() below.
+# Predefined interview questions, organized by interview type and
+# difficulty. Five per type+difficulty combination so a 5-question
+# interview at one difficulty never has to repeat within that type.
+# "Mixed" pools these three types together -- see _pick_question() below.
+# "Role-Specific" has its own bank in ROLE_SPECIFIC_TEMPLATES.
 INTERVIEW_QUESTIONS = {
     "HR / Behavioral": {
-        "Beginner": [
+        "Easy": [
             "Tell me about yourself.",
             "Why are you interested in this role?",
             "What are your greatest strengths and weaknesses?",
+            "What motivates you at work?",
+            "How do you handle receiving feedback?",
         ],
-        "Intermediate": [
+        "Medium": [
             "Describe a time you handled a conflict with a coworker.",
             "How do you handle stress or tight deadlines?",
             "Why should we hire you over other candidates?",
+            "Tell me about a time you had to work with someone whose working style was very different from yours.",
+            "Describe a goal you set for yourself and how you achieved it.",
         ],
-        "Advanced": [
+        "Hard": [
             "Tell me about a time you disagreed with your manager. How did you handle it?",
             "Describe a time you had to give difficult feedback to a peer.",
             "How would you handle being asked to take on responsibilities outside your job description?",
+            "Describe a time you failed at something important. What did you learn?",
+            "Tell me about a time you had to influence someone without direct authority over them.",
+        ],
+        "Expert": [
+            "Describe a time you had to make an unpopular decision that affected your team. How did you handle the fallout?",
+            "Tell me about a time you identified a systemic problem in how your team or organization worked, and what you did about it.",
+            "How would you handle leading a team through a period of significant organizational change?",
+            "Describe the most difficult ethical decision you've faced at work and how you approached it.",
+            "Tell me about a time you had to balance competing priorities from multiple stakeholders with conflicting goals.",
         ],
     },
     "Technical": {
-        "Beginner": [
+        "Easy": [
             "What tools or technologies are you most comfortable working with?",
             "Walk me through how you would approach learning a new skill required for this role.",
             "How do you stay up to date with developments in your field?",
+            "What does your typical workflow look like when starting a new task?",
+            "How do you decide what to work on first when you have multiple small tasks?",
         ],
-        "Intermediate": [
+        "Medium": [
             "Describe a technical problem you solved recently and how you approached it.",
             "How do you prioritize tasks when working on multiple technical problems at once?",
             "What's your process for troubleshooting an issue you haven't seen before?",
+            "How do you make sure your work meets quality standards before it's considered done?",
+            "Describe a time you had to learn a new tool or technology quickly to complete a task.",
         ],
-        "Advanced": [
+        "Hard": [
             "Describe the most complex project you've worked on and your specific contribution.",
             "How would you evaluate whether to build a solution in-house or use an existing tool?",
             "Tell me about a time a technical decision you made didn't work out. What did you learn?",
+            "How do you approach reviewing someone else's work and giving constructive feedback?",
+            "Describe a situation where you had to balance speed and quality under a tight deadline.",
+        ],
+        "Expert": [
+            "How would you design a process or system to scale as demands grow significantly over time?",
+            "Describe a time you had to make a major technical or strategic decision with incomplete information.",
+            "How would you approach mentoring a struggling team member while still meeting your own deliverables?",
+            "Tell me about a time you had to advocate for a technical or process change that others were resistant to.",
+            "Describe how you would evaluate and manage risk on a high-stakes project.",
         ],
     },
     "Situational": {
-        "Beginner": [
+        "Easy": [
             "How would you handle a task with unclear instructions?",
             "What would you do if you disagreed with a decision made by your team?",
             "How would you prioritize your work if given multiple urgent tasks at once?",
+            "What would you do if you noticed a mistake in your own completed work?",
+            "How would you respond if a coworker asked for help while you were busy with your own deadline?",
         ],
-        "Intermediate": [
+        "Medium": [
             "A project you're working on is falling behind schedule. What steps would you take?",
             "How would you handle a situation where a teammate isn't pulling their weight?",
             "What would you do if you made a mistake that affected the whole team?",
+            "How would you handle receiving conflicting instructions from two different managers?",
+            "What would you do if you were assigned a task outside your area of expertise?",
         ],
-        "Advanced": [
+        "Hard": [
             "You're asked to deliver a project with limited resources and a tight deadline. How do you approach it?",
             "How would you handle a situation where you had to push back on a request from senior leadership?",
             "Describe how you would manage a high-pressure situation with conflicting stakeholder priorities.",
+            "How would you handle discovering that a completed project had a significant flaw after it was delivered?",
+            "What would you do if you had to deliver bad news to a client or stakeholder?",
+        ],
+        "Expert": [
+            "How would you handle a situation where achieving a business goal required a decision you were personally uncomfortable with?",
+            "Describe how you would manage a crisis that affects multiple teams and has no clear owner.",
+            "How would you approach a situation where your team's success depended on a decision made by another department you had no control over?",
+            "What would you do if you discovered a serious problem that, if reported, would delay a major deliverable but if left unreported could have major consequences?",
+            "How would you handle a situation where you had to rebuild trust with a team or stakeholder after a major failure?",
         ],
     },
 }
 
 # Used only for the "Role-Specific" interview type -- {role} is filled in
-# with the job role chosen on the setup form.
+# with the job role chosen on the setup form. Five templates per
+# difficulty, same as the other banks, so a Role-Specific session doesn't
+# repeat the same question every round.
 ROLE_SPECIFIC_TEMPLATES = {
-    "Beginner": "What interests you most about the {role} role, and what makes you a good fit?",
-    "Intermediate": "What do you think are the most important skills for the {role} role, and how have you demonstrated them?",
-    "Advanced": "Describe a challenging project you'd expect to handle in the {role} role, and how you'd approach it.",
+    "Easy": [
+        "What interests you most about the {role} role, and what makes you a good fit?",
+        "What skills do you think are most important for someone in a {role} position?",
+        "Why did you choose to pursue work as a {role}?",
+        "What does a typical day look like for someone in the {role} role, in your understanding?",
+        "What part of {role} work do you find most rewarding?",
+    ],
+    "Medium": [
+        "What do you think are the most important skills for the {role} role, and how have you demonstrated them?",
+        "Describe a project or task typical of the {role} role that you're proud of.",
+        "How do you keep your skills relevant for the {role} role as things change over time?",
+        "What tools or methods do you rely on most in {role} work?",
+        "How would you explain the value of the {role} role to someone outside the field?",
+    ],
+    "Hard": [
+        "Describe a challenging project you'd expect to handle in the {role} role, and how you'd approach it.",
+        "What's the biggest mistake someone new to the {role} role might make, and how would you avoid it?",
+        "How would you handle a situation where the expectations of the {role} role conflicted with a tight deadline?",
+        "What would you do if you were asked to take on {role} work outside your current expertise?",
+        "How do you measure success in the {role} role?",
+    ],
+    "Expert": [
+        "How would you evaluate and improve the way {role} work is done across an entire team or organization?",
+        "Describe how you would mentor someone new to the {role} role while managing your own workload.",
+        "What long-term trends do you think will most affect the {role} role, and how would you prepare for them?",
+        "How would you handle a major setback on a high-stakes project central to the {role} role?",
+        "How would you balance innovation with reliability when making decisions in the {role} role?",
+    ],
 }
 
 # Kept from the previous version for a future feature. Not wired into any
@@ -150,7 +217,7 @@ Best regards,
 # "Mixed") that aren't literal keys in INTERVIEW_QUESTIONS -- they're
 # generated in setup() instead. List order here is the display order.
 INTERVIEW_TYPES = ["HR / Behavioral", "Technical", "Situational", "Role-Specific", "Mixed"]
-DIFFICULTIES = ["Beginner", "Intermediate", "Advanced"]
+DIFFICULTIES = ["Easy", "Medium", "Hard", "Expert"]
 EXPERIENCE_LEVELS = ["Entry-Level", "Mid-Level", "Senior"]
 LANGUAGES = ["English", "Urdu", "Spanish"]
 INTERVIEWER_STYLES = ["Friendly", "Formal", "Strict"]
@@ -174,15 +241,10 @@ TOTAL_QUESTIONS_PER_INTERVIEW = 5
 
 
 def _pick_question(interview_type, difficulty, job_role, already_asked):
-    """Pick a question for the given config, avoiding repeats where possible.
-
-    Role-Specific always returns the same templated question for a given
-    role+difficulty -- there's only one, so repeats are unavoidable there.
-    """
+    """Pick a question for the given config, avoiding repeats where possible."""
     if interview_type == "Role-Specific":
-        return ROLE_SPECIFIC_TEMPLATES[difficulty].format(role=job_role)
-
-    if interview_type == "Mixed":
+        pool = [t.format(role=job_role) for t in ROLE_SPECIFIC_TEMPLATES[difficulty]]
+    elif interview_type == "Mixed":
         pool = (
             INTERVIEW_QUESTIONS["HR / Behavioral"][difficulty]
             + INTERVIEW_QUESTIONS["Technical"][difficulty]
