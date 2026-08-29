@@ -21,8 +21,11 @@
 
 <form class="card" method="POST" action="{{ url_for('setup') }}">
     <label for="job_role">Job Role</label>
-    <input type="text" id="job_role" name="job_role" placeholder="e.g. Customer Support Representative"
-           value="{{ form.get('job_role', '') if form else '' }}" required>
+    <select id="job_role" name="job_role" required>
+        {% for role in job_roles %}
+        <option value="{{ role }}" {% if form and form.get('job_role') == role %}selected{% endif %}>{{ role }}</option>
+        {% endfor %}
+    </select>
 
     <label for="interview_type">Interview Type</label>
     <select id="interview_type" name="interview_type" required>

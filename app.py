@@ -10,77 +10,70 @@ app = Flask(__name__)
 # ever deploying this publicly.
 app.secret_key = "dev-secret-key"
 
-# Predefined interview questions, organized by category.
-# Each category has questions for each difficulty level.
+# Predefined interview questions, organized by interview type.
+# Each type has questions for each difficulty level. "Role-Specific" and
+# "Mixed" are handled separately -- see ROLE_SPECIFIC_TEMPLATES and the
+# Mixed-pool logic in setup() below.
 INTERVIEW_QUESTIONS = {
-    "HR": {
+    "HR / Behavioral": {
         "Beginner": [
             "Tell me about yourself.",
-            "Why do you want to work in a call center?",
-            "What are your strengths and weaknesses?",
+            "Why are you interested in this role?",
+            "What are your greatest strengths and weaknesses?",
         ],
         "Intermediate": [
             "Describe a time you handled a conflict with a coworker.",
-            "How do you handle stress during a busy shift?",
+            "How do you handle stress or tight deadlines?",
             "Why should we hire you over other candidates?",
         ],
         "Advanced": [
             "Tell me about a time you disagreed with your manager. How did you handle it?",
-            "How would you handle being asked to work overtime with no notice?",
-            "Describe a situation where you had to give difficult feedback to a peer.",
+            "Describe a time you had to give difficult feedback to a peer.",
+            "How would you handle being asked to take on responsibilities outside your job description?",
         ],
     },
-    "Customer Service": {
+    "Technical": {
         "Beginner": [
-            "How would you greet a customer calling for the first time?",
-            "What does good customer service mean to you?",
-            "How do you stay polite when a customer is rude?",
+            "What tools or technologies are you most comfortable working with?",
+            "Walk me through how you would approach learning a new skill required for this role.",
+            "How do you stay up to date with developments in your field?",
         ],
         "Intermediate": [
-            "A customer is unhappy with a delayed order. How do you respond?",
-            "How would you handle a customer who keeps interrupting you?",
-            "Describe how you would de-escalate an angry customer.",
+            "Describe a technical problem you solved recently and how you approached it.",
+            "How do you prioritize tasks when working on multiple technical problems at once?",
+            "What's your process for troubleshooting an issue you haven't seen before?",
         ],
         "Advanced": [
-            "A customer threatens to cancel their service unless given a refund you can't approve. How do you handle it?",
-            "How would you manage a customer who has been transferred multiple times and is frustrated?",
-            "Describe a time you turned a negative customer experience into a positive one.",
+            "Describe the most complex project you've worked on and your specific contribution.",
+            "How would you evaluate whether to build a solution in-house or use an existing tool?",
+            "Tell me about a time a technical decision you made didn't work out. What did you learn?",
         ],
     },
-    "Sales": {
+    "Situational": {
         "Beginner": [
-            "How would you introduce a new product to a customer?",
-            "What makes a good salesperson?",
-            "How do you handle a customer who says 'I'm not interested'?",
+            "How would you handle a task with unclear instructions?",
+            "What would you do if you disagreed with a decision made by your team?",
+            "How would you prioritize your work if given multiple urgent tasks at once?",
         ],
         "Intermediate": [
-            "How would you upsell a product without sounding pushy?",
-            "Describe how you would handle a customer comparing you to a competitor.",
-            "What would you do if a customer wanted a discount you couldn't give?",
+            "A project you're working on is falling behind schedule. What steps would you take?",
+            "How would you handle a situation where a teammate isn't pulling their weight?",
+            "What would you do if you made a mistake that affected the whole team?",
         ],
         "Advanced": [
-            "How would you close a sale with a customer who has been hesitant for weeks?",
-            "Describe a time you lost a sale. What would you do differently now?",
-            "How would you handle a high-value client threatening to switch to a competitor?",
+            "You're asked to deliver a project with limited resources and a tight deadline. How do you approach it?",
+            "How would you handle a situation where you had to push back on a request from senior leadership?",
+            "Describe how you would manage a high-pressure situation with conflicting stakeholder priorities.",
         ],
     },
-    "Technical Support": {
-        "Beginner": [
-            "How would you explain a technical issue to a non-technical customer?",
-            "What steps would you take when a customer says their device won't turn on?",
-            "How do you stay calm when you don't know the answer right away?",
-        ],
-        "Intermediate": [
-            "A customer's internet keeps disconnecting. How would you troubleshoot this over the phone?",
-            "How would you handle a customer who doesn't follow your instructions correctly?",
-            "Describe how you would explain a software update to a frustrated user.",
-        ],
-        "Advanced": [
-            "A customer's issue requires escalation, but they refuse to be transferred. How do you handle it?",
-            "Describe how you would manage a technical outage affecting many customers at once.",
-            "How would you handle a customer who claims your previous advice made the problem worse?",
-        ],
-    },
+}
+
+# Used only for the "Role-Specific" interview type -- {role} is filled in
+# with the job role chosen on the setup form.
+ROLE_SPECIFIC_TEMPLATES = {
+    "Beginner": "What interests you most about the {role} role, and what makes you a good fit?",
+    "Intermediate": "What do you think are the most important skills for the {role} role, and how have you demonstrated them?",
+    "Advanced": "Describe a challenging project you'd expect to handle in the {role} role, and how you'd approach it.",
 }
 
 # Kept from the previous version for a future feature. Not wired into any
@@ -153,11 +146,28 @@ Best regards,
 [Company Name]""",
 }
 
-CATEGORIES = list(INTERVIEW_QUESTIONS.keys())
+# The interview type dropdown includes two types ("Role-Specific" and
+# "Mixed") that aren't literal keys in INTERVIEW_QUESTIONS -- they're
+# generated in setup() instead. List order here is the display order.
+INTERVIEW_TYPES = ["HR / Behavioral", "Technical", "Situational", "Role-Specific", "Mixed"]
 DIFFICULTIES = ["Beginner", "Intermediate", "Advanced"]
 EXPERIENCE_LEVELS = ["Entry-Level", "Mid-Level", "Senior"]
 LANGUAGES = ["English", "Urdu", "Spanish"]
 INTERVIEWER_STYLES = ["Friendly", "Formal", "Strict"]
+
+# Add new roles here to extend the dropdown -- no other code changes needed.
+JOB_ROLES = [
+    "Software Engineer",
+    "Python Developer",
+    "Web Developer",
+    "Data Analyst",
+    "Customer Support",
+    "Sales",
+    "Marketing",
+    "Project Manager",
+    "Business Analyst",
+    "General / Other",
+]
 
 
 @app.route("/")
@@ -170,7 +180,7 @@ def index():
 def setup():
     """Collect the interview configuration, then pick a random question."""
     if request.method == "POST":
-        job_role = request.form.get("job_role", "").strip()
+        job_role = request.form.get("job_role")
         interview_type = request.form.get("interview_type")
         difficulty = request.form.get("difficulty")
         experience_level = request.form.get("experience_level")
@@ -180,9 +190,9 @@ def setup():
         job_description = request.form.get("job_description", "").strip()
 
         errors = []
-        if not job_role:
-            errors.append("Please enter the job role you're practicing for.")
-        if interview_type not in INTERVIEW_QUESTIONS:
+        if job_role not in JOB_ROLES:
+            errors.append("Please choose a valid job role.")
+        if interview_type not in INTERVIEW_TYPES:
             errors.append("Please choose a valid interview type.")
         if difficulty not in DIFFICULTIES:
             errors.append("Please choose a valid difficulty.")
@@ -196,7 +206,8 @@ def setup():
         if errors:
             return render_template(
                 "interview_setup.html",
-                interview_types=CATEGORIES,
+                job_roles=JOB_ROLES,
+                interview_types=INTERVIEW_TYPES,
                 difficulties=DIFFICULTIES,
                 experience_levels=EXPERIENCE_LEVELS,
                 languages=LANGUAGES,
@@ -205,7 +216,17 @@ def setup():
                 form=request.form,
             )
 
-        question = random.choice(INTERVIEW_QUESTIONS[interview_type][difficulty])
+        if interview_type == "Role-Specific":
+            question = ROLE_SPECIFIC_TEMPLATES[difficulty].format(role=job_role)
+        elif interview_type == "Mixed":
+            question_pool = (
+                INTERVIEW_QUESTIONS["HR / Behavioral"][difficulty]
+                + INTERVIEW_QUESTIONS["Technical"][difficulty]
+                + INTERVIEW_QUESTIONS["Situational"][difficulty]
+            )
+            question = random.choice(question_pool)
+        else:
+            question = random.choice(INTERVIEW_QUESTIONS[interview_type][difficulty])
 
         # Store the config and question in the session so the next two pages
         # (/interview and /results) can use them without passing them in the URL.
@@ -227,7 +248,8 @@ def setup():
 
     return render_template(
         "interview_setup.html",
-        interview_types=CATEGORIES,
+        job_roles=JOB_ROLES,
+        interview_types=INTERVIEW_TYPES,
         difficulties=DIFFICULTIES,
         experience_levels=EXPERIENCE_LEVELS,
         languages=LANGUAGES,
