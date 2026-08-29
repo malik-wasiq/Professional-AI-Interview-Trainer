@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Results • Professional AI Interview Trainer{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-icon">📝</div>
+    <div>
+        <div class="page-header-title">Your Results</div>
+        <div class="page-header-subtitle">{{ category }} — {{ difficulty }}</div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="section-label">QUESTION</div>
+    <p class="question-box">{{ question }}</p>
+
+    <div class="section-label">YOUR ANSWER</div>
+    <p class="answer-box">{{ answer }}</p>
+
+    <div class="section-label">EVALUATION RESULTS</div>
+    <!-- No AI yet -- these are placeholder scores, same as the original app. -->
+    <ul class="score-list">
+        <li>Communication: 8/10</li>
+        <li>Grammar: 7/10</li>
+        <li>Confidence: 9/10</li>
+        <li>Professionalism: 8/10</li>
+        <li class="score-overall">Overall Score: 8/10</li>
+    </ul>
+
+    <div class="section-label">IMPROVEMENT SUGGESTIONS</div>
+    <ol class="suggestion-list">
+        <li>Use more specific examples to support your points.</li>
+        <li>Keep sentences shorter and clearer for easier understanding.</li>
+        <li>Practice a confident tone by speaking slower and pausing between ideas.</li>
+    </ol>
+
+    <a href="{{ url_for('setup') }}" class="btn btn-primary">Practice Another Question</a>
+</div>
+{% endblock %}

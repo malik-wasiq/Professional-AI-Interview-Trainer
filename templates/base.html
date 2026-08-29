@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Professional AI Interview Trainer{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="{{ url_for('index') }}" class="navbar-brand">
+            <span class="brand-icon">🎯</span>
+            <span class="brand-text">
+                <span class="brand-name">Professional AI</span>
+                <span class="brand-tag">Interview Trainer</span>
+            </span>
+        </a>
+        <div class="navbar-links">
+            <a href="{{ url_for('index') }}">Home</a>
+            <a href="{{ url_for('setup') }}">Practice</a>
+        </div>
+    </nav>
+
+    <main class="page-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="app-footer">
+        Built with <span>Python</span> • <span>Flask</span> • <span>Claude Code</span>
+    </footer>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

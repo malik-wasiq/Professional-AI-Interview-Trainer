@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Interview • Professional AI Interview Trainer{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-icon">🎤</div>
+    <div>
+        <div class="page-header-title">{{ category }} — {{ difficulty }}</div>
+        <div class="page-header-subtitle">Read the question below and write your answer as if this were a real interview.</div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="section-label">QUESTION</div>
+    <p class="question-box">{{ question }}</p>
+
+    {% if error %}
+    <p class="form-error">{{ error }}</p>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('interview') }}" id="answer-form">
+        <label for="answer">Your Answer</label>
+        <textarea id="answer" name="answer" rows="6" placeholder="Type your answer here...">{{ request.form.get('answer', '') }}</textarea>
+        <button type="submit" class="btn btn-primary">Submit Answer</button>
+    </form>
+</div>
+{% endblock %}

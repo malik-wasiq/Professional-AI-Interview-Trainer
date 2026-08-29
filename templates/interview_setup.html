@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Interview Setup • Professional AI Interview Trainer{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-header-icon">🎤</div>
+    <div>
+        <div class="page-header-title">Interview Setup</div>
+        <div class="page-header-subtitle">Choose a category and difficulty to generate your practice question.</div>
+    </div>
+</div>
+
+<form class="card" method="POST" action="{{ url_for('setup') }}">
+    <label for="category">Category</label>
+    <select id="category" name="category" required>
+        {% for c in categories %}
+        <option value="{{ c }}">{{ c }}</option>
+        {% endfor %}
+    </select>
+
+    <label for="difficulty">Difficulty</label>
+    <select id="difficulty" name="difficulty" required>
+        {% for d in difficulties %}
+        <option value="{{ d }}">{{ d }}</option>
+        {% endfor %}
+    </select>
+
+    <button type="submit" class="btn btn-primary">Generate Question</button>
+</form>
+{% endblock %}
