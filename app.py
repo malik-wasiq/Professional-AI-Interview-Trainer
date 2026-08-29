@@ -220,7 +220,7 @@ INTERVIEW_TYPES = ["HR / Behavioral", "Technical", "Situational", "Role-Specific
 DIFFICULTIES = ["Easy", "Medium", "Hard", "Expert"]
 EXPERIENCE_LEVELS = ["Entry-Level", "Mid-Level", "Senior"]
 LANGUAGES = ["English", "Urdu", "Spanish"]
-INTERVIEWER_STYLES = ["Friendly", "Formal", "Strict"]
+INTERVIEWER_STYLES = ["Professional", "Friendly", "Strict", "Challenging", "Technical"]
 
 # Add new roles here to extend the dropdown -- no other code changes needed.
 JOB_ROLES = [

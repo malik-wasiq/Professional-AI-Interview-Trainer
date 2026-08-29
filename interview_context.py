@@ -7,12 +7,19 @@ follow-up step (see _decide_follow_up() in app.py) -- without duplicating
 it in two places. This module builds text only; it makes no network calls
 and knows nothing about OpenRouter or HTTP.
 
-Style keys match app.py's INTERVIEWER_STYLES exactly: "Friendly",
-"Formal", "Strict".
+Style keys match app.py's INTERVIEWER_STYLES exactly: "Professional",
+"Friendly", "Strict", "Challenging", "Technical".
+
+"Formal" was the old name for "Professional" (renamed so no internal or
+user-facing value is called "Formal" anymore). _LEGACY_STYLE_ALIASES
+maps it back to "Professional" so an old session/config that still has
+"Formal" saved keeps producing a sensible description instead of falling
+through to the generic fallback -- new setup submissions can only ever
+produce "Professional", since that's what's in app.py's INTERVIEWER_STYLES.
 """
 
 INTERVIEWER_STYLES = {
-    "Formal": {
+    "Professional": {
         "label": "Professional",
         "traits": [
             "Formal and balanced",
@@ -23,24 +30,48 @@ INTERVIEWER_STYLES = {
     "Friendly": {
         "label": "Friendly",
         "traits": [
-            "Warm and encouraging in tone",
-            "Puts the candidate at ease before probing deeper",
-            "Frames gaps constructively rather than critically",
+            "Warm and conversational",
+            "Encouraging",
+            "Helps the candidate feel comfortable",
+            "Frames weaknesses constructively",
         ],
     },
     "Strict": {
         "label": "Strict",
         "traits": [
-            "Direct and demanding, closer to a high-pressure real interview",
-            "Pushes for specifics and doesn't let vague answers slide",
-            "Withholds praise until it's clearly earned",
+            "Direct and demanding",
+            "Expects specific answers",
+            "Minimal unnecessary praise",
+            "Clearly challenges weak responses",
+        ],
+    },
+    "Challenging": {
+        "label": "Challenging",
+        "traits": [
+            "Pushes the candidate to think deeper",
+            "Challenges assumptions",
+            "Asks probing questions",
+            "Encourages detailed reasoning",
+        ],
+    },
+    "Technical": {
+        "label": "Technical",
+        "traits": [
+            "Precise and technically focused",
+            "Emphasizes correctness and depth",
+            "Uses appropriate technical terminology",
+            "Suitable for technical and role-specific interviews",
         ],
     },
 }
 
+# Old value -> current value, for sessions/configs saved before the rename.
+_LEGACY_STYLE_ALIASES = {"Formal": "Professional"}
+
 
 def describe_interviewer_style(style):
     """Return a short behavioral description for the given interviewer style."""
+    style = _LEGACY_STYLE_ALIASES.get(style, style)
     profile = INTERVIEWER_STYLES.get(style)
     if not profile:
         return f"Interviewer style: {style or 'Not specified'}."
