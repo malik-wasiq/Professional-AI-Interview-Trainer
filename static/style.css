@@ -166,7 +166,8 @@ form label {
     margin: 0.75rem 0 0.4rem 0;
 }
 form select,
-form textarea {
+form textarea,
+form input[type="text"] {
     width: 100%;
     background: rgba(255,255,255,0.05);
     border: 1px solid var(--glass-border);
@@ -178,12 +179,15 @@ form textarea {
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 form select:focus,
-form textarea:focus {
+form textarea:focus,
+form input[type="text"]:focus {
     outline: none;
     border-color: var(--accent);
     box-shadow: 0 0 0 3px rgba(56,189,248,0.2);
 }
 form textarea { resize: vertical; }
+
+.optional-tag { color: var(--text-muted); font-weight: 400; }
 
 .form-error {
     color: #FCA5A5;
@@ -192,6 +196,17 @@ form textarea { resize: vertical; }
     border-radius: 10px;
     padding: 0.6rem 0.9rem;
     font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.ai-notice {
+    color: #FDE68A;
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: 10px;
+    padding: 0.6rem 0.9rem;
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
 }
 
 /* ---------- Buttons ---------- */

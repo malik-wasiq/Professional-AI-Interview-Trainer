@@ -2,6 +2,8 @@ import random
 
 from flask import Flask, redirect, render_template, request, session, url_for
 
+from ai_evaluator import evaluate_answer
+
 app = Flask(__name__)
 # Needed by Flask to sign the session cookie. Fine for local development;
 # replace with a real secret (e.g. from an environment variable) before
@@ -153,6 +155,9 @@ Best regards,
 
 CATEGORIES = list(INTERVIEW_QUESTIONS.keys())
 DIFFICULTIES = ["Beginner", "Intermediate", "Advanced"]
+EXPERIENCE_LEVELS = ["Entry-Level", "Mid-Level", "Senior"]
+LANGUAGES = ["English", "Urdu", "Spanish"]
+INTERVIEWER_STYLES = ["Friendly", "Formal", "Strict"]
 
 
 @app.route("/")
@@ -163,35 +168,77 @@ def index():
 
 @app.route("/setup", methods=["GET", "POST"])
 def setup():
-    """Let the user pick a category and difficulty, then pick a random question."""
+    """Collect the interview configuration, then pick a random question."""
     if request.method == "POST":
-        category = request.form.get("category")
+        job_role = request.form.get("job_role", "").strip()
+        interview_type = request.form.get("interview_type")
         difficulty = request.form.get("difficulty")
+        experience_level = request.form.get("experience_level")
+        language = request.form.get("language")
+        interviewer_style = request.form.get("interviewer_style")
+        custom_instructions = request.form.get("custom_instructions", "").strip()
+        job_description = request.form.get("job_description", "").strip()
 
-        # Guard against tampered/invalid form values.
-        if category not in INTERVIEW_QUESTIONS or difficulty not in DIFFICULTIES:
-            return redirect(url_for("setup"))
+        errors = []
+        if not job_role:
+            errors.append("Please enter the job role you're practicing for.")
+        if interview_type not in INTERVIEW_QUESTIONS:
+            errors.append("Please choose a valid interview type.")
+        if difficulty not in DIFFICULTIES:
+            errors.append("Please choose a valid difficulty.")
+        if experience_level not in EXPERIENCE_LEVELS:
+            errors.append("Please choose a valid experience level.")
+        if language not in LANGUAGES:
+            errors.append("Please choose a valid language.")
+        if interviewer_style not in INTERVIEWER_STYLES:
+            errors.append("Please choose a valid interviewer style.")
 
-        question = random.choice(INTERVIEW_QUESTIONS[category][difficulty])
+        if errors:
+            return render_template(
+                "interview_setup.html",
+                interview_types=CATEGORIES,
+                difficulties=DIFFICULTIES,
+                experience_levels=EXPERIENCE_LEVELS,
+                languages=LANGUAGES,
+                styles=INTERVIEWER_STYLES,
+                errors=errors,
+                form=request.form,
+            )
 
-        # Store the chosen question in the session so the next two pages
-        # (/interview and /results) can use it without passing it in the URL.
-        session["category"] = category
-        session["difficulty"] = difficulty
+        question = random.choice(INTERVIEW_QUESTIONS[interview_type][difficulty])
+
+        # Store the config and question in the session so the next two pages
+        # (/interview and /results) can use them without passing them in the URL.
+        session["config"] = {
+            "job_role": job_role,
+            "interview_type": interview_type,
+            "difficulty": difficulty,
+            "experience_level": experience_level,
+            "language": language,
+            "interviewer_style": interviewer_style,
+            "custom_instructions": custom_instructions,
+            "job_description": job_description,
+        }
         session["question"] = question
         session.pop("answer", None)
+        session.pop("evaluation", None)
 
         return redirect(url_for("interview"))
 
     return render_template(
-        "interview_setup.html", categories=CATEGORIES, difficulties=DIFFICULTIES
+        "interview_setup.html",
+        interview_types=CATEGORIES,
+        difficulties=DIFFICULTIES,
+        experience_levels=EXPERIENCE_LEVELS,
+        languages=LANGUAGES,
+        styles=INTERVIEWER_STYLES,
     )
 
 
 @app.route("/interview", methods=["GET", "POST"])
 def interview():
     """Show the generated question and collect the user's answer."""
-    if "question" not in session:
+    if "question" not in session or "config" not in session:
         # No question has been generated yet -- send them to set one up first.
         return redirect(url_for("setup"))
 
@@ -201,39 +248,36 @@ def interview():
         if not answer:
             return render_template(
                 "interview.html",
-                category=session["category"],
-                difficulty=session["difficulty"],
+                config=session["config"],
                 question=session["question"],
                 error="Please write an answer before submitting.",
             )
 
+        evaluation = evaluate_answer(session["config"], session["question"], answer)
+
         session["answer"] = answer
+        session["evaluation"] = evaluation
         return redirect(url_for("results"))
 
     return render_template(
         "interview.html",
-        category=session["category"],
-        difficulty=session["difficulty"],
+        config=session["config"],
         question=session["question"],
     )
 
 
 @app.route("/results")
 def results():
-    """Show a scored evaluation of the submitted answer.
-
-    No AI is used yet -- these are placeholder scores, same as the
-    original Answer Evaluation page.
-    """
-    if "answer" not in session:
+    """Show the AI-generated evaluation of the submitted answer."""
+    if "evaluation" not in session:
         return redirect(url_for("setup"))
 
     return render_template(
         "results.html",
-        category=session["category"],
-        difficulty=session["difficulty"],
+        config=session["config"],
         question=session["question"],
         answer=session["answer"],
+        evaluation=session["evaluation"],
     )
 
 

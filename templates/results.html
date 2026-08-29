@@ -7,11 +7,15 @@
     <div class="page-header-icon">📝</div>
     <div>
         <div class="page-header-title">Your Results</div>
-        <div class="page-header-subtitle">{{ category }} — {{ difficulty }}</div>
+        <div class="page-header-subtitle">{{ config.job_role }} — {{ config.interview_type }} ({{ config.difficulty }})</div>
     </div>
 </div>
 
 <div class="card">
+    {% if evaluation.is_fallback %}
+    <p class="ai-notice">{{ evaluation.fallback_reason or "AI evaluation is unavailable right now. Showing a placeholder evaluation instead." }}</p>
+    {% endif %}
+
     <div class="section-label">QUESTION</div>
     <p class="question-box">{{ question }}</p>
 
@@ -19,20 +23,18 @@
     <p class="answer-box">{{ answer }}</p>
 
     <div class="section-label">EVALUATION RESULTS</div>
-    <!-- No AI yet -- these are placeholder scores, same as the original app. -->
     <ul class="score-list">
-        <li>Communication: 8/10</li>
-        <li>Grammar: 7/10</li>
-        <li>Confidence: 9/10</li>
-        <li>Professionalism: 8/10</li>
-        <li class="score-overall">Overall Score: 8/10</li>
+        {% for label, score in evaluation.scores.items() %}
+        <li>{{ label }}: {{ score }}/10</li>
+        {% endfor %}
+        <li class="score-overall">Overall Score: {{ evaluation.overall_score }}/10</li>
     </ul>
 
     <div class="section-label">IMPROVEMENT SUGGESTIONS</div>
     <ol class="suggestion-list">
-        <li>Use more specific examples to support your points.</li>
-        <li>Keep sentences shorter and clearer for easier understanding.</li>
-        <li>Practice a confident tone by speaking slower and pausing between ideas.</li>
+        {% for tip in evaluation.suggestions %}
+        <li>{{ tip }}</li>
+        {% endfor %}
     </ol>
 
     <a href="{{ url_for('setup') }}" class="btn btn-primary">Practice Another Question</a>
