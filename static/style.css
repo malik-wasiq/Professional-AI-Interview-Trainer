@@ -203,6 +203,38 @@ a:focus-visible, button:focus-visible, .btn:focus-visible {
     margin: 1rem 0 0.6rem 0;
 }
 
+/* ---------- Interview configuration summary ---------- */
+.config-summary { padding-bottom: 1.1rem; }
+.config-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.9rem 1.25rem;
+}
+.config-summary-grid > div { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
+.config-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+.config-value {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #fff;
+    overflow-wrap: break-word;
+}
+.config-badge {
+    display: inline-block;
+    font-size: 0.78rem;
+    color: var(--success);
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: 999px;
+    padding: 0.3rem 0.8rem;
+    margin: 0.75rem 0.5rem 0 0;
+}
+
 /* ---------- Feature cards (Home page) ---------- */
 .feature-card-icon {
     font-size: 1.5rem;

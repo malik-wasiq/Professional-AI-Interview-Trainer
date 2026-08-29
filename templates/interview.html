@@ -14,6 +14,25 @@
     </div>
 </div>
 
+<div class="card fade-in-up config-summary">
+    <div class="section-label">INTERVIEW CONFIGURATION</div>
+    <div class="config-summary-grid">
+        <div><span class="config-label">Job Role</span><span class="config-value">{{ config.job_role }}</span></div>
+        <div><span class="config-label">Experience Level</span><span class="config-value">{{ config.experience_level }}</span></div>
+        <div><span class="config-label">Interview Type</span><span class="config-value">{{ config.interview_type }}</span></div>
+        <div><span class="config-label">Difficulty</span><span class="config-value">{{ config.difficulty }}</span></div>
+        <div><span class="config-label">Language</span><span class="config-value">{{ config.language }}</span></div>
+        <div><span class="config-label">Interviewer Style</span><span class="config-value">{{ config.interviewer_style }}</span></div>
+        <div><span class="config-label">Number of Questions</span><span class="config-value">{{ interview.total_questions }}</span></div>
+    </div>
+    {% if config.custom_instructions %}
+    <span class="config-badge">✓ Custom instructions active</span>
+    {% endif %}
+    {% if config.job_description %}
+    <span class="config-badge">✓ Job description provided</span>
+    {% endif %}
+</div>
+
 <div class="progress-label">
     <span>Question {{ interview.question_number }} of {{ interview.total_questions }}</span>
     <span>{{ percent | round | int }}% complete</span>
