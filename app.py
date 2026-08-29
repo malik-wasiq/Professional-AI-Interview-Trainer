@@ -169,6 +169,43 @@ JOB_ROLES = [
     "General / Other",
 ]
 
+# How many questions make up one interview session.
+TOTAL_QUESTIONS_PER_INTERVIEW = 5
+
+
+def _pick_question(interview_type, difficulty, job_role, already_asked):
+    """Pick a question for the given config, avoiding repeats where possible.
+
+    Role-Specific always returns the same templated question for a given
+    role+difficulty -- there's only one, so repeats are unavoidable there.
+    """
+    if interview_type == "Role-Specific":
+        return ROLE_SPECIFIC_TEMPLATES[difficulty].format(role=job_role)
+
+    if interview_type == "Mixed":
+        pool = (
+            INTERVIEW_QUESTIONS["HR / Behavioral"][difficulty]
+            + INTERVIEW_QUESTIONS["Technical"][difficulty]
+            + INTERVIEW_QUESTIONS["Situational"][difficulty]
+        )
+    else:
+        pool = INTERVIEW_QUESTIONS[interview_type][difficulty]
+
+    unused = [q for q in pool if q not in already_asked]
+    return random.choice(unused) if unused else random.choice(pool)
+
+
+def _decide_follow_up(config, question, answer):
+    """Decide whether to ask a follow-up question instead of moving on.
+
+    Stub for now -- always returns None (no follow-up), since generating an
+    intelligent follow-up requires an AI call, which this step doesn't make.
+    This is the hook point for a future AI-generated follow-up: when wired
+    up, it would call the OpenRouter integration (like evaluate_answer)
+    and return a follow-up question string instead of None.
+    """
+    return None
+
 
 @app.route("/")
 def index():
@@ -216,20 +253,11 @@ def setup():
                 form=request.form,
             )
 
-        if interview_type == "Role-Specific":
-            question = ROLE_SPECIFIC_TEMPLATES[difficulty].format(role=job_role)
-        elif interview_type == "Mixed":
-            question_pool = (
-                INTERVIEW_QUESTIONS["HR / Behavioral"][difficulty]
-                + INTERVIEW_QUESTIONS["Technical"][difficulty]
-                + INTERVIEW_QUESTIONS["Situational"][difficulty]
-            )
-            question = random.choice(question_pool)
-        else:
-            question = random.choice(INTERVIEW_QUESTIONS[interview_type][difficulty])
+        question = _pick_question(interview_type, difficulty, job_role, already_asked=set())
 
-        # Store the config and question in the session so the next two pages
-        # (/interview and /results) can use them without passing them in the URL.
+        # Store the config and a fresh interview session, replacing anything
+        # left over from a previous interview -- this is what makes
+        # restarting from Setup clear the old session.
         session["config"] = {
             "job_role": job_role,
             "interview_type": interview_type,
@@ -240,9 +268,15 @@ def setup():
             "custom_instructions": custom_instructions,
             "job_description": job_description,
         }
-        session["question"] = question
-        session.pop("answer", None)
-        session.pop("evaluation", None)
+        session["interview"] = {
+            "current_question": question,
+            "question_number": 1,
+            "total_questions": TOTAL_QUESTIONS_PER_INTERVIEW,
+            "questions_asked": [question],
+            "answers_submitted": [],
+            "history": [],
+        }
+        session.pop("final_evaluation", None)
 
         return redirect(url_for("interview"))
 
@@ -259,10 +293,18 @@ def setup():
 
 @app.route("/interview", methods=["GET", "POST"])
 def interview():
-    """Show the generated question and collect the user's answer."""
-    if "question" not in session or "config" not in session:
-        # No question has been generated yet -- send them to set one up first.
+    """Show the current question and collect the user's answer.
+
+    Each answer is recorded, then either a follow-up or the next question
+    is shown (see _decide_follow_up), until total_questions is reached --
+    at which point the interview is complete and /results takes over.
+    """
+    if "interview" not in session or "config" not in session:
+        # No interview in progress -- send them to set one up first.
         return redirect(url_for("setup"))
+
+    config = session["config"]
+    state = session["interview"]
 
     if request.method == "POST":
         answer = request.form.get("answer", "").strip()
@@ -270,36 +312,59 @@ def interview():
         if not answer:
             return render_template(
                 "interview.html",
-                config=session["config"],
-                question=session["question"],
+                config=config,
+                interview=state,
                 error="Please write an answer before submitting.",
             )
 
-        evaluation = evaluate_answer(session["config"], session["question"], answer)
+        question = state["current_question"]
+        state["answers_submitted"].append(answer)
+        state["history"].append({
+            "question_number": state["question_number"],
+            "question": question,
+            "answer": answer,
+        })
 
-        session["answer"] = answer
-        session["evaluation"] = evaluation
-        return redirect(url_for("results"))
+        if state["question_number"] >= state["total_questions"]:
+            # Last question answered -- score it and finish the interview.
+            evaluation = evaluate_answer(config, question, answer)
+            session["final_evaluation"] = evaluation
+            session["interview"] = state
+            session.modified = True
+            return redirect(url_for("results"))
+
+        follow_up = _decide_follow_up(config, question, answer)
+        next_question = follow_up or _pick_question(
+            config["interview_type"], config["difficulty"], config["job_role"],
+            already_asked=set(state["questions_asked"]),
+        )
+
+        state["question_number"] += 1
+        state["current_question"] = next_question
+        state["questions_asked"].append(next_question)
+        session["interview"] = state
+        session.modified = True
+
+        return redirect(url_for("interview"))
 
     return render_template(
         "interview.html",
-        config=session["config"],
-        question=session["question"],
+        config=config,
+        interview=state,
     )
 
 
 @app.route("/results")
 def results():
-    """Show the AI-generated evaluation of the submitted answer."""
-    if "evaluation" not in session:
+    """Show the full interview history and the AI-generated final evaluation."""
+    if "final_evaluation" not in session:
         return redirect(url_for("setup"))
 
     return render_template(
         "results.html",
         config=session["config"],
-        question=session["question"],
-        answer=session["answer"],
-        evaluation=session["evaluation"],
+        interview=session["interview"],
+        evaluation=session["final_evaluation"],
     )
 
 

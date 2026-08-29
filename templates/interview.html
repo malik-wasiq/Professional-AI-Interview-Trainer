@@ -12,8 +12,8 @@
 </div>
 
 <div class="card">
-    <div class="section-label">QUESTION</div>
-    <p class="question-box">{{ question }}</p>
+    <div class="section-label">QUESTION {{ interview.question_number }} OF {{ interview.total_questions }}</div>
+    <p class="question-box">{{ interview.current_question }}</p>
 
     {% if error %}
     <p class="form-error">{{ error }}</p>

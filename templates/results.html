@@ -16,13 +16,14 @@
     <p class="ai-notice">{{ evaluation.fallback_reason or "AI evaluation is unavailable right now. Showing a placeholder evaluation instead." }}</p>
     {% endif %}
 
-    <div class="section-label">QUESTION</div>
-    <p class="question-box">{{ question }}</p>
+    <div class="section-label">INTERVIEW HISTORY ({{ interview.history|length }} QUESTIONS)</div>
+    {% for turn in interview.history %}
+    <p class="section-label" style="margin-top: 1rem;">QUESTION {{ turn.question_number }}</p>
+    <p class="question-box">{{ turn.question }}</p>
+    <p class="answer-box">{{ turn.answer }}</p>
+    {% endfor %}
 
-    <div class="section-label">YOUR ANSWER</div>
-    <p class="answer-box">{{ answer }}</p>
-
-    <div class="section-label">EVALUATION RESULTS</div>
+    <div class="section-label">FINAL EVALUATION RESULTS</div>
     <ul class="score-list">
         {% for label, score in evaluation.scores.items() %}
         <li>{{ label }}: {{ score }}/10</li>
