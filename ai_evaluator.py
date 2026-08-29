@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
-MODEL = os.environ.get("OPENROUTER_MODEL", "anthropic/claude-opus-5")
+MODEL = os.environ.get("OPENROUTER_MODEL")  # set via .env once a model is chosen
 REQUEST_TIMEOUT = 30  # seconds
 
 # Shown to the user whenever we can't get a real AI evaluation.
@@ -83,8 +83,8 @@ def evaluate_answer(config, question, answer):
     "is_fallback": bool, "fallback_reason": str | None}
     """
     api_key = os.environ.get("OPENROUTER_API_KEY")
-    if not api_key:
-        return _fallback("AI evaluation is not configured (missing API key). Showing a placeholder evaluation instead.")
+    if not api_key or not MODEL:
+        return _fallback("AI evaluation is not configured (missing OPENROUTER_API_KEY or OPENROUTER_MODEL). Showing a placeholder evaluation instead.")
 
     headers = {
         "Authorization": f"Bearer {api_key}",
