@@ -13,4 +13,15 @@ document.addEventListener("DOMContentLoaded", function () {
             answer.focus();
         }
     });
+
+    // Live character count, purely cosmetic -- doesn't affect validation.
+    var answer = document.getElementById("answer");
+    var count = document.getElementById("answer-count");
+    if (answer && count) {
+        var updateCount = function () {
+            count.textContent = answer.value.length;
+        };
+        answer.addEventListener("input", updateCount);
+        updateCount();
+    }
 });

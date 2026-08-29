@@ -3,39 +3,49 @@
 {% block title %}Home • Professional AI Interview Trainer{% endblock %}
 
 {% block content %}
-<div class="hero-card">
+<div class="hero-card fade-in-up">
+    <span class="hero-badge">AI-POWERED • MULTI-QUESTION MOCK INTERVIEWS</span>
     <div class="hero-title">🎯 Professional AI Interview Trainer</div>
     <div class="hero-subtitle">
-        Practice real interview questions, write your answers, and get feedback
-        to help you prepare with confidence.
+        Practice real interview questions tailored to your role, work through a
+        full mock interview, and get scored feedback so you walk in prepared
+        and confident.
     </div>
-    <a href="{{ url_for('setup') }}" class="btn btn-primary">Start Practicing →</a>
+    <a href="{{ url_for('setup') }}" class="btn btn-primary">Start Interview →</a>
 </div>
 
-<div class="section-label">HOW IT WORKS</div>
+<div class="section-label">WHY USE THIS TRAINER</div>
 <div class="card-grid">
-    <div class="card">
-        <div class="feature-card-icon">🗂️</div>
-        <div class="feature-card-title">1. Choose a Category</div>
+    <div class="card fade-in-up" style="animation-delay: 0.05s;">
+        <div class="feature-card-icon" aria-hidden="true">🧭</div>
+        <div class="feature-card-title">Tailored Practice</div>
         <div class="feature-card-desc">
-            Pick a question category and difficulty level that matches what
-            you want to practice.
+            Choose your job role, interview type, experience level, and
+            difficulty so every question fits what you're preparing for.
         </div>
     </div>
-    <div class="card">
-        <div class="feature-card-icon">🎤</div>
-        <div class="feature-card-title">2. Answer the Question</div>
+    <div class="card fade-in-up" style="animation-delay: 0.1s;">
+        <div class="feature-card-icon" aria-hidden="true">🔄</div>
+        <div class="feature-card-title">Full Mock Sessions</div>
         <div class="feature-card-desc">
-            You'll get a random interview question. Type your answer just
-            like you would in a real interview.
+            Work through a complete multi-question interview, not just a
+            single prompt -- the way a real interview actually feels.
         </div>
     </div>
-    <div class="card">
-        <div class="feature-card-icon">📝</div>
-        <div class="feature-card-title">3. Review Your Results</div>
+    <div class="card fade-in-up" style="animation-delay: 0.15s;">
+        <div class="feature-card-icon" aria-hidden="true">🤖</div>
+        <div class="feature-card-title">AI-Scored Feedback</div>
         <div class="feature-card-desc">
-            See a scored evaluation of your answer along with suggestions to
-            help you improve.
+            Get a scored evaluation of your answers with concrete
+            suggestions on what to improve.
+        </div>
+    </div>
+    <div class="card fade-in-up" style="animation-delay: 0.2s;">
+        <div class="feature-card-icon" aria-hidden="true">🌐</div>
+        <div class="feature-card-title">Your Language, Your Style</div>
+        <div class="feature-card-desc">
+            Practice in the language you're most comfortable with, against
+            an interviewer style from friendly to strict.
         </div>
     </div>
 </div>

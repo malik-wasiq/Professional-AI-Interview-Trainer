@@ -7,9 +7,11 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <nav class="navbar">
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <nav class="navbar" aria-label="Main navigation">
         <a href="{{ url_for('index') }}" class="navbar-brand">
-            <span class="brand-icon">🎯</span>
+            <span class="brand-icon" aria-hidden="true">🎯</span>
             <span class="brand-text">
                 <span class="brand-name">Professional AI</span>
                 <span class="brand-tag">Interview Trainer</span>
@@ -17,11 +19,11 @@
         </a>
         <div class="navbar-links">
             <a href="{{ url_for('index') }}">Home</a>
-            <a href="{{ url_for('setup') }}">Practice</a>
+            <a href="{{ url_for('setup') }}">Start Interview</a>
         </div>
     </nav>
 
-    <main class="page-content">
+    <main class="page-content" id="main-content">
         {% block content %}{% endblock %}
     </main>
 

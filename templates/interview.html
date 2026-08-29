@@ -3,25 +3,37 @@
 {% block title %}Interview • Professional AI Interview Trainer{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <div class="page-header-icon">🎤</div>
+{% set completed = interview.question_number - 1 %}
+{% set percent = (completed / interview.total_questions * 100) if interview.total_questions else 0 %}
+
+<div class="page-header fade-in-up">
+    <div class="page-header-icon" aria-hidden="true">🎤</div>
     <div>
         <div class="page-header-title">{{ config.job_role }} — {{ config.interview_type }}</div>
         <div class="page-header-subtitle">{{ config.experience_level }} • {{ config.difficulty }} • {{ config.interviewer_style }} interviewer</div>
     </div>
 </div>
 
-<div class="card">
-    <div class="section-label">QUESTION {{ interview.question_number }} OF {{ interview.total_questions }}</div>
+<div class="progress-label">
+    <span>Question {{ interview.question_number }} of {{ interview.total_questions }}</span>
+    <span>{{ percent | round | int }}% complete</span>
+</div>
+<div class="progress-track" role="progressbar" aria-valuenow="{{ percent | round | int }}" aria-valuemin="0" aria-valuemax="100">
+    <div class="progress-fill" style="width: {{ percent }}%;"></div>
+</div>
+
+<div class="card fade-in-up">
+    <div class="section-label">QUESTION {{ interview.question_number }}</div>
     <p class="question-box">{{ interview.current_question }}</p>
 
     {% if error %}
-    <p class="form-error">{{ error }}</p>
+    <p class="form-error" role="alert">{{ error }}</p>
     {% endif %}
 
     <form method="POST" action="{{ url_for('interview') }}" id="answer-form">
         <label for="answer">Your Answer</label>
         <textarea id="answer" name="answer" rows="6" placeholder="Type your answer here...">{{ request.form.get('answer', '') }}</textarea>
+        <p class="answer-meta"><span id="answer-count">0</span> characters</p>
         <button type="submit" class="btn btn-primary">Submit Answer</button>
     </form>
 </div>

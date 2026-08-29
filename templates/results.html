@@ -3,17 +3,17 @@
 {% block title %}Results • Professional AI Interview Trainer{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <div class="page-header-icon">📝</div>
+<div class="page-header fade-in-up">
+    <div class="page-header-icon" aria-hidden="true">📝</div>
     <div>
-        <div class="page-header-title">Your Results</div>
+        <div class="page-header-title">Interview Complete 🎉</div>
         <div class="page-header-subtitle">{{ config.job_role }} — {{ config.interview_type }} ({{ config.difficulty }})</div>
     </div>
 </div>
 
-<div class="card">
+<div class="card fade-in-up">
     {% if evaluation.is_fallback %}
-    <p class="ai-notice">{{ evaluation.fallback_reason or "AI evaluation is unavailable right now. Showing a placeholder evaluation instead." }}</p>
+    <p class="ai-notice" role="status">{{ evaluation.fallback_reason or "AI evaluation is unavailable right now. Showing a placeholder evaluation instead." }}</p>
     {% endif %}
 
     <div class="section-label">INTERVIEW HISTORY ({{ interview.history|length }} QUESTIONS)</div>
@@ -24,12 +24,16 @@
     {% endfor %}
 
     <div class="section-label">FINAL EVALUATION RESULTS</div>
-    <ul class="score-list">
-        {% for label, score in evaluation.scores.items() %}
-        <li>{{ label }}: {{ score }}/10</li>
-        {% endfor %}
-        <li class="score-overall">Overall Score: {{ evaluation.overall_score }}/10</li>
-    </ul>
+    {% for label, score in evaluation.scores.items() %}
+    <div class="score-row">
+        <div class="score-row-label"><span>{{ label }}</span><span>{{ score }}/10</span></div>
+        <div class="score-row-track"><div class="score-row-fill" style="width: {{ score * 10 }}%;"></div></div>
+    </div>
+    {% endfor %}
+    <div class="score-overall-card">
+        <span>Overall Score</span>
+        <span>{{ evaluation.overall_score }}/10</span>
+    </div>
 
     <div class="section-label">IMPROVEMENT SUGGESTIONS</div>
     <ol class="suggestion-list">
@@ -38,6 +42,6 @@
         {% endfor %}
     </ol>
 
-    <a href="{{ url_for('setup') }}" class="btn btn-primary">Practice Another Question</a>
+    <a href="{{ url_for('setup') }}" class="btn btn-primary">Practice Another Interview</a>
 </div>
 {% endblock %}
