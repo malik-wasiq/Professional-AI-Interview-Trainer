@@ -16,26 +16,20 @@
     <p class="ai-notice" role="status">{{ evaluation.fallback_reason or "AI evaluation is unavailable right now. Showing a placeholder evaluation instead." }}</p>
     {% endif %}
 
-    <div class="section-label">INTERVIEW HISTORY ({{ interview.history|length }} QUESTIONS)</div>
-    {% for turn in interview.history %}
-    <p class="section-label" style="margin-top: 1rem;">QUESTION {{ turn.question_number }}</p>
-    <p class="question-box">{{ turn.question }}</p>
-    <p class="answer-box">{{ turn.answer }}</p>
-    {% endfor %}
+    <div class="score-overall-card">
+        <span class="score-overall-label">Overall Score</span>
+        <span class="score-overall-value">{{ evaluation.overall_score }}<span>/10</span></span>
+    </div>
 
-    <div class="section-label">FINAL EVALUATION RESULTS</div>
+    <div class="section-label">SCORE BREAKDOWN</div>
     {% for label, score in evaluation.scores.items() %}
     <div class="score-row">
         <div class="score-row-label"><span>{{ label }}</span><span>{{ score }}/10</span></div>
         <div class="score-row-track"><div class="score-row-fill" style="width: {{ score * 10 }}%;"></div></div>
     </div>
     {% endfor %}
-    <div class="score-overall-card">
-        <span>Overall Score</span>
-        <span>{{ evaluation.overall_score }}/10</span>
-    </div>
 
-    <div class="section-label">IMPROVEMENT SUGGESTIONS</div>
+    <div class="section-label" style="margin-top: 1.5rem;">IMPROVEMENT SUGGESTIONS</div>
     <ol class="suggestion-list">
         {% for tip in evaluation.suggestions %}
         <li>{{ tip }}</li>
@@ -43,5 +37,14 @@
     </ol>
 
     <a href="{{ url_for('setup') }}" class="btn btn-primary">Practice Another Interview</a>
+</div>
+
+<div class="card fade-in-up" style="animation-delay: 0.08s;">
+    <div class="section-label">INTERVIEW HISTORY ({{ interview.history|length }} QUESTIONS)</div>
+    {% for turn in interview.history %}
+    <p class="section-label" style="margin-top: 1rem;">QUESTION {{ turn.question_number }}</p>
+    <p class="question-box">{{ turn.question }}</p>
+    <p class="answer-box">{{ turn.answer }}</p>
+    {% endfor %}
 </div>
 {% endblock %}

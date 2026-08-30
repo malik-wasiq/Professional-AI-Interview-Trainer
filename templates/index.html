@@ -3,20 +3,68 @@
 {% block title %}Home • Professional AI Interview Trainer{% endblock %}
 
 {% block content %}
-<div class="hero-card fade-in-up">
-    <span class="hero-badge">AI-POWERED • MULTI-QUESTION MOCK INTERVIEWS</span>
-    <div class="hero-title">🎯 Professional AI Interview Trainer</div>
-    <div class="hero-subtitle">
-        Practice real interview questions tailored to your role, work through a
-        full mock interview, and get scored feedback so you walk in prepared
-        and confident.
+<section class="hero-section">
+    <div class="hero-grid">
+        <div class="hero-text fade-in-up">
+            <span class="hero-badge">AI-Powered • Multi-Question Mock Interviews</span>
+            <h1 class="hero-title">Practice interviews that actually feel real</h1>
+            <p class="hero-subtitle">
+                Practice real interview questions tailored to your role, work through a
+                full mock interview, and get scored feedback so you walk in prepared
+                and confident.
+            </p>
+            <a href="{{ url_for('setup') }}" class="btn btn-primary">Start Interview →</a>
+
+            <div class="hero-stats">
+                <div class="hero-stat">
+                    <span class="hero-stat-value">5</span>
+                    <span class="hero-stat-label">Questions per session</span>
+                </div>
+                <div class="hero-stat">
+                    <span class="hero-stat-value">10</span>
+                    <span class="hero-stat-label">Job roles</span>
+                </div>
+                <div class="hero-stat">
+                    <span class="hero-stat-value">5</span>
+                    <span class="hero-stat-label">Interviewer styles</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="hero-visual fade-in-up" style="animation-delay: 0.1s;">
+            <svg class="hero-illustration" viewBox="0 0 480 380" role="img" aria-label="Illustration of an AI-driven interview chat with a scored progress bar">
+                <circle cx="240" cy="190" r="175" class="hv-blob" />
+                <rect x="70" y="60" width="340" height="200" rx="20" class="hv-frame" />
+                <rect x="90" y="80" width="300" height="160" rx="12" class="hv-screen" />
+
+                <rect x="112" y="100" width="180" height="34" rx="17" class="hv-bubble-ai" />
+                <circle cx="128" cy="117" r="10" class="hv-avatar-ai" />
+
+                <rect x="188" y="148" width="180" height="34" rx="17" class="hv-bubble-user" />
+                <circle cx="352" cy="165" r="10" class="hv-avatar-user" />
+
+                <rect x="112" y="196" width="256" height="10" rx="5" class="hv-track" />
+                <rect x="112" y="196" width="178" height="10" rx="5" class="hv-track-fill" />
+
+                <rect x="180" y="272" width="120" height="8" rx="4" class="hv-base" />
+                <rect x="210" y="260" width="60" height="12" rx="4" class="hv-stand" />
+
+                <g class="hv-badge-group">
+                    <circle cx="392" cy="86" r="28" class="hv-badge-bg" />
+                    <path d="M380 86 l8 8 16 -16" class="hv-badge-check" />
+                </g>
+
+                <circle cx="58" cy="130" r="5" class="hv-dot hv-dot-1" />
+                <circle cx="424" cy="220" r="6" class="hv-dot hv-dot-2" />
+                <circle cx="92" cy="272" r="4" class="hv-dot hv-dot-3" />
+            </svg>
+        </div>
     </div>
-    <a href="{{ url_for('setup') }}" class="btn btn-primary">Start Interview →</a>
-</div>
+</section>
 
 <div class="section-label">WHY USE THIS TRAINER</div>
 <div class="card-grid">
-    <div class="card fade-in-up" style="animation-delay: 0.05s;">
+    <div class="card feature-card fade-in-up" style="animation-delay: 0.05s;">
         <div class="feature-card-icon" aria-hidden="true">🧭</div>
         <div class="feature-card-title">Tailored Practice</div>
         <div class="feature-card-desc">
@@ -24,7 +72,7 @@
             difficulty so every question fits what you're preparing for.
         </div>
     </div>
-    <div class="card fade-in-up" style="animation-delay: 0.1s;">
+    <div class="card feature-card fade-in-up" style="animation-delay: 0.1s;">
         <div class="feature-card-icon" aria-hidden="true">🔄</div>
         <div class="feature-card-title">Full Mock Sessions</div>
         <div class="feature-card-desc">
@@ -32,7 +80,7 @@
             single prompt -- the way a real interview actually feels.
         </div>
     </div>
-    <div class="card fade-in-up" style="animation-delay: 0.15s;">
+    <div class="card feature-card fade-in-up" style="animation-delay: 0.15s;">
         <div class="feature-card-icon" aria-hidden="true">🤖</div>
         <div class="feature-card-title">AI-Scored Feedback</div>
         <div class="feature-card-desc">
@@ -40,7 +88,7 @@
             suggestions on what to improve.
         </div>
     </div>
-    <div class="card fade-in-up" style="animation-delay: 0.2s;">
+    <div class="card feature-card fade-in-up" style="animation-delay: 0.2s;">
         <div class="feature-card-icon" aria-hidden="true">🌐</div>
         <div class="feature-card-title">Your Language, Your Style</div>
         <div class="feature-card-desc">
