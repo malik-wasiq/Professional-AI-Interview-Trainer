@@ -10,19 +10,27 @@ split:
   ai_evaluator.py        -> answer evaluation
   question_generator.py  -> this module: next-question generation
 
-generate_question() always uses the static question bank today. It is the
-single entry point app.py should call -- swapping in real AI-generated
-questions later only means changing what happens inside that function,
-not how app.py calls it.
-
-build_question_prompt() below is a prompt builder for a *future*
-OpenRouter-backed question generation step, following the same pattern as
-ai_evaluator.py. It is not wired up or called anywhere yet and this
-module makes no network calls.
+generate_question() tries OpenRouter first (build_question_prompt() below,
+sent the same way ai_evaluator.py sends its evaluation prompt) and falls
+back to the static question bank whenever AI generation isn't configured,
+fails, or returns something that can't be trusted -- the interview always
+has a next question either way, and that fallback never raises or prints
+anything that could leak the API key.
 """
+import os
 import random
 
+import requests
+from dotenv import load_dotenv
+
 from interview_context import build_interview_context
+
+load_dotenv()
+
+OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
+MODEL = os.environ.get("OPENROUTER_MODEL")  # set via .env once a model is chosen
+REQUEST_TIMEOUT = 20  # seconds
+MIN_QUESTION_LENGTH = 8  # characters; shorter than this is treated as unusable
 
 # Static question bank, organized by interview type and difficulty. Five
 # per type+difficulty combination so a 5-question interview at one
@@ -169,14 +177,87 @@ def generate_question(config, history):
     question strings already asked in this session -- used to avoid
     repeats.
 
-    Always draws from the static question bank today.
+    Tries OpenRouter first; falls back to the static question bank if AI
+    generation isn't configured, fails, or returns something unusable.
     """
+    ai_question = _generate_ai_question(config, history)
+    if ai_question:
+        return ai_question
+
     return _pick_from_static_bank(
         config.get("interview_type"),
         config.get("difficulty"),
         config.get("job_role"),
         already_asked=history,
     )
+
+
+def _generate_ai_question(config, history):
+    """Try to generate a question via OpenRouter.
+
+    Returns the question text, or None if generation isn't configured,
+    the request fails, or the response can't be trusted -- callers fall
+    back to the static bank in every None case. Never raises, and never
+    prints/logs the API key or a raw error message.
+    """
+    api_key = os.environ.get("OPENROUTER_API_KEY")
+    if not api_key or not MODEL:
+        return None
+
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "model": MODEL,
+        "messages": [
+            {"role": "system", "content": QUESTION_SYSTEM_PROMPT},
+            {"role": "user", "content": build_question_prompt(config, history)},
+        ],
+        "max_tokens": 200,
+    }
+
+    try:
+        response = requests.post(OPENROUTER_URL, headers=headers, json=payload, timeout=REQUEST_TIMEOUT)
+    except requests.exceptions.Timeout:
+        return None
+    except requests.exceptions.ConnectionError:
+        return None
+    except requests.exceptions.RequestException:
+        return None
+    except Exception:
+        return None
+
+    if response.status_code == 429:
+        return None
+    if not response.ok:
+        return None
+
+    try:
+        data = response.json()
+        text = data["choices"][0]["message"]["content"].strip()
+    except (ValueError, KeyError, IndexError, TypeError):
+        return None
+
+    return _clean_and_validate_question(text, history)
+
+
+def _clean_and_validate_question(text, history):
+    """Return a usable, non-repeat question, or None to trigger the fallback."""
+    if not text:
+        return None
+
+    # The model sometimes wraps the question in quotes despite instructions.
+    text = text.strip().strip('"').strip("'").strip()
+
+    if len(text) < MIN_QUESTION_LENGTH:
+        return None
+
+    already_asked = {q.strip().lower() for q in history}
+    if text.lower() in already_asked:
+        return None
+
+    return text
 
 
 def _pick_from_static_bank(interview_type, difficulty, job_role, already_asked):
@@ -197,10 +278,8 @@ def _pick_from_static_bank(interview_type, difficulty, job_role, already_asked):
 
 
 # ---------------------------------------------------------------------------
-# AI-ready prompt design -- not wired up yet, no network call is made from
-# this module. This is what a future AI-generated question step would send
-# to OpenRouter (see ai_evaluator.py for the actual HTTP call pattern to
-# reuse when this gets implemented).
+# AI question generation prompt -- sent to OpenRouter by _generate_ai_question()
+# above when OPENROUTER_API_KEY and OPENROUTER_MODEL are both set.
 # ---------------------------------------------------------------------------
 
 QUESTION_SYSTEM_PROMPT = """You are an experienced interviewer generating the next \
@@ -220,7 +299,7 @@ Return ONLY the question text -- no preamble, no numbering, no quotes, no explan
 
 
 def build_question_prompt(config, history):
-    """Build the (not-yet-sent) prompt for a future AI-generated question step.
+    """Build the user-message prompt for AI-generated question creation.
 
     Reuses interview_context.build_interview_context() for the shared
     configuration/behavior context, then appends the already-asked
