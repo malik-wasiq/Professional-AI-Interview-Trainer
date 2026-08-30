@@ -1,13 +1,25 @@
+import os
+
+from dotenv import load_dotenv
 from flask import Flask, redirect, render_template, request, session, url_for
 
 from ai_evaluator import evaluate_answer
 from question_generator import generate_question
 
+load_dotenv()
+
 app = Flask(__name__)
-# Needed by Flask to sign the session cookie. Fine for local development;
-# replace with a real secret (e.g. from an environment variable) before
-# ever deploying this publicly.
-app.secret_key = "dev-secret-key"
+
+# Needed by Flask to sign the session cookie. Required from the environment
+# (see .env.example) so a real deployment can never fall back to a
+# hardcoded, publicly-known secret.
+SECRET_KEY = os.environ.get("SECRET_KEY")
+if not SECRET_KEY:
+    raise RuntimeError(
+        "SECRET_KEY environment variable is not set. Add SECRET_KEY to your "
+        ".env file (see .env.example) before running the app."
+    )
+app.secret_key = SECRET_KEY
 
 # Kept from the previous version for a future feature. Not wired into any
 # route yet -- do not delete until a Customer Scenarios page is (re)built.
@@ -278,4 +290,8 @@ def results():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    # Debug mode is opt-in via the environment so production runs never
+    # accidentally start with Flask's debugger/reloader enabled. Set
+    # FLASK_DEBUG=true locally if you want it.
+    debug_mode = os.environ.get("FLASK_DEBUG", "false").strip().lower() == "true"
+    app.run(debug=debug_mode)
