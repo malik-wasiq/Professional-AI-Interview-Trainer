@@ -25,6 +25,7 @@ SAMPLE_CONFIG = {
 }
 
 FAKE_API_KEY = "sk-or-v1-super-secret-test-key-should-never-leak"
+FAKE_API_KEY_2 = "sk-or-v1-second-super-secret-test-key-should-never-leak"
 
 
 def _mock_response(status_code=200, json_data=None, ok=None):
@@ -139,6 +140,58 @@ class GenerateAIQuestionTests(unittest.TestCase):
         self.assertTrue(_is_from_static_bank(question, SAMPLE_CONFIG))
         combined_output = captured_out.getvalue() + captured_err.getvalue()
         self.assertNotIn(FAKE_API_KEY, combined_output)
+
+
+class SecondKeyRetryTests(unittest.TestCase):
+    """Covers the OPENROUTER_API_KEY_2 retry-on-429 behavior."""
+
+    def test_success_on_first_key_never_touches_second_key(self):
+        ai_text = "What's a time you improved an existing process?"
+        response = _mock_response(200, {"choices": [{"message": {"content": ai_text}}]})
+        with _configured_env(), \
+             mock.patch.dict("os.environ", {"OPENROUTER_API_KEY_2": FAKE_API_KEY_2}), \
+             mock.patch.object(qg.requests, "post", return_value=response) as post:
+            question = qg.generate_question(SAMPLE_CONFIG, history=[])
+        self.assertEqual(post.call_count, 1)
+        self.assertEqual(question, ai_text)
+
+    def test_429_on_first_key_retries_with_second_key_and_succeeds(self):
+        ai_text = "Describe your approach to debugging a flaky test."
+        first_response = _mock_response(429)
+        second_response = _mock_response(200, {"choices": [{"message": {"content": ai_text}}]})
+
+        with _configured_env(), \
+             mock.patch.dict("os.environ", {"OPENROUTER_API_KEY_2": FAKE_API_KEY_2}), \
+             mock.patch.object(qg.requests, "post", side_effect=[first_response, second_response]) as post:
+            question = qg.generate_question(SAMPLE_CONFIG, history=[])
+
+        self.assertEqual(post.call_count, 2)
+        self.assertEqual(question, ai_text)
+        # The retry must use the second key's Authorization header, not the first's.
+        second_call_headers = post.call_args_list[1].kwargs["headers"]
+        self.assertIn(FAKE_API_KEY_2, second_call_headers["Authorization"])
+
+    def test_429_on_first_key_with_no_second_key_configured_falls_back(self):
+        response = _mock_response(429)
+        with _configured_env(), \
+             mock.patch.dict("os.environ", {}, clear=False), \
+             mock.patch.object(qg.requests, "post", return_value=response) as post:
+            # Make sure no leftover OPENROUTER_API_KEY_2 is set from the environment.
+            import os as _os
+            _os.environ.pop("OPENROUTER_API_KEY_2", None)
+            question = qg.generate_question(SAMPLE_CONFIG, history=[])
+        self.assertEqual(post.call_count, 1)
+        self.assertTrue(_is_from_static_bank(question, SAMPLE_CONFIG))
+
+    def test_429_on_both_keys_falls_back(self):
+        first_response = _mock_response(429)
+        second_response = _mock_response(429)
+        with _configured_env(), \
+             mock.patch.dict("os.environ", {"OPENROUTER_API_KEY_2": FAKE_API_KEY_2}), \
+             mock.patch.object(qg.requests, "post", side_effect=[first_response, second_response]) as post:
+            question = qg.generate_question(SAMPLE_CONFIG, history=[])
+        self.assertEqual(post.call_count, 2)
+        self.assertTrue(_is_from_static_bank(question, SAMPLE_CONFIG))
 
 
 def _configured_env():

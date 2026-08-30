@@ -195,19 +195,18 @@ def generate_question(config, history):
 def _generate_ai_question(config, history):
     """Try to generate a question via OpenRouter.
 
-    Returns the question text, or None if generation isn't configured,
-    the request fails, or the response can't be trusted -- callers fall
-    back to the static bank in every None case. Never raises, and never
-    prints/logs the API key or a raw error message.
+    Tries OPENROUTER_API_KEY first. If that request comes back HTTP 429
+    (rate limited) and OPENROUTER_API_KEY_2 is configured, retries the same
+    request once with the second key. Returns the question text, or None if
+    generation isn't configured, both attempts fail, or the response can't
+    be trusted -- callers fall back to the static bank in every None case.
+    Never raises, and never prints/logs either API key or a raw error
+    message.
     """
     api_key = os.environ.get("OPENROUTER_API_KEY")
     if not api_key or not MODEL:
         return None
 
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json",
-    }
     payload = {
         "model": MODEL,
         "messages": [
@@ -217,20 +216,14 @@ def _generate_ai_question(config, history):
         "max_tokens": 200,
     }
 
-    try:
-        response = requests.post(OPENROUTER_URL, headers=headers, json=payload, timeout=REQUEST_TIMEOUT)
-    except requests.exceptions.Timeout:
-        return None
-    except requests.exceptions.ConnectionError:
-        return None
-    except requests.exceptions.RequestException:
-        return None
-    except Exception:
-        return None
+    response = _post_to_openrouter(api_key, payload)
 
-    if response.status_code == 429:
-        return None
-    if not response.ok:
+    if response is not None and response.status_code == 429:
+        api_key_2 = os.environ.get("OPENROUTER_API_KEY_2")
+        if api_key_2:
+            response = _post_to_openrouter(api_key_2, payload)
+
+    if response is None or not response.ok:
         return None
 
     try:
@@ -240,6 +233,29 @@ def _generate_ai_question(config, history):
         return None
 
     return _clean_and_validate_question(text, history)
+
+
+def _post_to_openrouter(api_key, payload):
+    """POST payload to OpenRouter using the given key.
+
+    Returns the response object, or None if the request itself failed
+    (timeout, connection error, etc.) -- callers treat None the same as an
+    unusable response and fall back to the static bank.
+    """
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    }
+    try:
+        return requests.post(OPENROUTER_URL, headers=headers, json=payload, timeout=REQUEST_TIMEOUT)
+    except requests.exceptions.Timeout:
+        return None
+    except requests.exceptions.ConnectionError:
+        return None
+    except requests.exceptions.RequestException:
+        return None
+    except Exception:
+        return None
 
 
 def _clean_and_validate_question(text, history):
