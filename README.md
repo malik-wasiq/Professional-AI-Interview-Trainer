@@ -4,6 +4,12 @@ A Flask-based web application that helps job applicants and professionals practi
 
 Both the interview questions and the final evaluation can be AI-generated via [OpenRouter](https://openrouter.ai/) — see [AI Question Generation](#ai-question-generation) and [AI Evaluation](#ai-evaluation) below. Both are fully optional: with no API key configured, the app runs end to end using a static question bank and a placeholder evaluation instead.
 
+## 🚀 Live Demo
+
+[**🌐 Try the Live Demo**](https://web-production-f5785.up.railway.app/)
+
+The application is deployed on Railway and can be tested directly in your browser — no setup required.
+
 ## Features
 
 - **🎤 Configurable Interview Setup** — Choose a job role (10 presets, e.g. Software Engineer, Data Analyst, Sales, Project Manager), an interview type (HR / Behavioral, Technical, Situational, Role-Specific, Mixed), experience level, difficulty (Easy, Medium, Hard, Expert), language, and interviewer style (Professional, Friendly, Strict, Challenging, Technical), plus optional job description and custom instructions.
